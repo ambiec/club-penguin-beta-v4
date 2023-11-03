@@ -18,13 +18,9 @@ body {
 
 .chat-input {
     flex-direction: row;
-    align-items: left;
+    align-items: center;
     justify-content: center;
-    gap: 24px;
-}
-
-.chat-enter-note {
-    height: 28px;
+    gap: 12px;
 }
 
 input {
@@ -40,7 +36,7 @@ input {
 
 button {
     height: 28px;
-    margin-top: 10px;
+    padding: 0 12px;
 }
 
 p {
