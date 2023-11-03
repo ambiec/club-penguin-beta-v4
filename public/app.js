@@ -1,10 +1,17 @@
 window.addEventListener('load', ()=>{
     console.log('loaded');
+
+
+
 })
 
 
 
 let spriteDrawn=false;
+let coords = [];
+let x;
+let y;
+
 function setup() {
     createCanvas(windowWidth, windowHeight);
     background(255);
@@ -23,9 +30,10 @@ function setup() {
 function draw() {
     background(255);
   if (spriteDrawn === true) {
-    spr.attractionPoint(0.5, mouseX, mouseY);
+    console.log(x);
+    spr.attractionPoint(0.5, x, y);
   }
-  let distance = dist(spr.position.x, spr.position.y, mouseX, mouseY);
+  let distance = dist(spr.position.x, spr.position.y, x, y);
         if (distance < 5) {
             // Stop the sprite when it's close to the mouse
             spr.setSpeed(0);
@@ -36,6 +44,23 @@ function draw() {
     // console.log("sprite drawn");
 }
 
+function storeCoordinate(x, y, array) {
+    array.push(x);
+    array.push(y);
+}
+
 function mouseClicked() {
     spriteDrawn = true;
+    storeCoordinate(mouseX, mouseY, coords);
+    // to loop through coordinate values
+    for (let i = 0; i < coords.length; i+=2) {
+        x = coords[i];
+        y = coords[i+1];
+    } 
 }
+
+
+
+
+
+
