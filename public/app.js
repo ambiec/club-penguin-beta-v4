@@ -3,6 +3,9 @@ let chatFeed = document.getElementById('chat-feed');
 let sendButton = document.getElementById('send-button');
 let chatContainer = document.getElementById('chat-container');
 
+let msgData;
+
+
 window.addEventListener('load', ()=>{
     console.log('loaded');
     let socket = io();
@@ -14,14 +17,19 @@ window.addEventListener('load', ()=>{
     socket.on('msg', (data) => {
         console.log("Message arrived!");
         console.log(data);
+        
 
         //Receive message from server
         //need to get text to pop up above sprite
+
+        msgData = data.msg;
+        //I tried JSON.stringify, data.data, data.value lol
 
         //original appending code from socket example
         // let msgEl = document.createElement('p');
         // msgEl.innerHTML = data.msg;
         // chatFeed.appendChild(msgEl);
+
     })
 
     
@@ -66,7 +74,7 @@ function setup() {
     background(255);
     spr = createSprite(
         width/2, height/2, 40, 40);
-    spr.shapeColor = color(0);
+    spr.shapeColor = color(255,0,0);
     spr.rotateToDirection = true;
     spr.maxSpeed = 4;
     spr.friction = 0.1;
@@ -88,6 +96,7 @@ function draw() {
             spriteDrawn = false;
         }
   drawSprites();
+  printMessage();
     
     // console.log("sprite drawn");
 }
@@ -110,11 +119,14 @@ function mouseClicked() {
     if(y>inputRect.bottom){
         spriteDrawn = true;
     }
-    
-    
 }
 
-
+function printMessage() {
+    textSize(16);
+    textAlign(CENTER);
+    text(msgData, spr.position.x, spr.position.y - 40);
+    // console.log('text stored');
+}
 
 
 

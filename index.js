@@ -22,7 +22,7 @@ io.on('connection', (socket) => {
         console.log("Received a 'msg' event");
 
         //Emit message to all clients
-        io.sockets.emit('msg', data);
+        io.emit('msg', data);
     })
 
 
