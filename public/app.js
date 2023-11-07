@@ -3,8 +3,14 @@ let chatFeed = document.getElementById('chat-feed');
 let sendButton = document.getElementById('send-button');
 let chatContainer = document.getElementById('chat-container');
 
-let spr =[];
+let spr = [];
 let sprObj = {};
+let key;
+
+let r;
+let g;
+let b;
+
 let spriteMove=false;
 
 let coords = [];
@@ -12,11 +18,13 @@ let x;
 let y;
 let targetX;
 let targetY;
-let updated = false;
+let clicked = false;
 
 let clickID;
 let msgData;
-let key;
+
+let spriteDupes = {};
+let newKey;
 
 let socket = io();
 
@@ -27,10 +35,14 @@ let socket = io();
     // Receiving 'newConnect' event from SERVER
     socket.on('newConnect', (newClient)=> {
 
+        r = random(255);
+        g = random(255);
+        b = random(255);
+
         // Create sprite unique to newClient socket.id
         spr[newClient] = createSprite(
             width/2, height/2, 40, 40);
-        spr[newClient].shapeColor = color(0);
+        spr[newClient].shapeColor = color(r,g,b);
         spr[newClient].rotateToDirection = true;
         spr[newClient].maxSpeed = 4;
         spr[newClient].friction = 0.1;
@@ -41,47 +53,41 @@ let socket = io();
             id: newClient,
             sprX: spr[newClient].position.x,
             sprY: spr[newClient].position.y,
+            r: r,
+            g: g,
+            b: b
         }
-
-        // console.log(spr);
-        socket.emit('existingSprites', sprObj);
-
+        
+        if (socket.id == newClient) {
+            socket.emit('allSprites', sprObj);
+        }
+        
     })
 
-    socket.on('existingSprites', (data) => {
-        for (let clientId in data) {
-            if (clientId != socket.id) {
-                
-                console.log(socket.id);
-                // console.log(data[clientId].sprX + ', '+ data[clientId].sprY);
+    socket.on('allSprites', (data) => {
+        for (let client in data) {
+            let clientId = data[client].id;
+         if (clientId !== key && socket.id == key) {
+                newKey = clientId; //if 'clicked' then use xy from mouse? access target xy?
+                // console.log(clientId); //targetted new client
+                spr[newKey] = createSprite(
+                    data[client].sprX, data[client].sprY, 40, 40);
+                spr[newKey].shapeColor = color(data[client].r, data[client].g, data[client].b);
+                spr[newKey].rotateToDirection = true;
+                spr[newKey].maxSpeed = 4;
+                spr[newKey].friction = 0.1;
 
-                if(!spr[clientId]) {
-                    let existingX = data[clientId].sprX;
-                    let existingY = data[clientId].sprY;
-
-                    console.log(existingX + ', ' + existingY);
-
-                    spr[clientId] = createSprite(
-                        existingX, existingY, 40, 40);
-                    spr[clientId].shapeColor = color(0);
-                    spr[clientId].rotateToDirection = true;
-                    spr[clientId].maxSpeed = 4;
-                    spr[clientId].friction = 0.1;
+                spriteDupes[newKey] = {
+                    id: newKey,
+                    sprX: spr[newKey].position.x,
+                    sprY: spr[newKey].position.y,
+                    r: r,
+                    g: g,
+                    b: b
                 }
-                // } else {
-                //     let mousePos = {
-                //         id: clientId,
-                //         x: data[clientId].sprX,
-                //         y: data[clientId].sprY
-                //         }
-                
-                //         socket.emit('mouse', mousePos);
-                // }
-                
             }
         }
     })
-
 
     /*socket.on('clientSplice',(dcClient) => {
         // console.log(sprites.clientId);
@@ -166,8 +172,6 @@ let inputRect = chatContainer.getBoundingClientRect();
 // console.log(inputRect.top, inputRect.right, inputRect.bottom, inputRect.left);
 
 
-
-
 /////////////////
 // P5 | P5Play //
 /////////////////
@@ -187,37 +191,38 @@ function draw() {
     background(255);
 
     // Match clickID to sprObj.id #Source: ChatGPT
-    for (let clientId in sprObj) {
-        if (sprObj.hasOwnProperty(clientId) && sprObj[clientId].id === clickID) {
-            // console.log(clickID + " exists in the object");
-
+    for (let client in sprObj) {
+        if (sprObj[client].id == clickID) {
             if (spriteMove === true) {
-                spr[clientId].attractionPoint(0.5, x, y);
+                spr[client].attractionPoint(0.5, x, y);
             }
 
-            let distance = dist(spr[clientId].position.x, spr[clientId].position.y, x, y);
+            let distance = dist(spr[client].position.x, spr[client].position.y, x, y);
             if (distance < 5) { // Stop the sprite when it's close to the mouse
-                spr[clientId].setSpeed(0);
+                spr[client].setSpeed(0);
+                spriteMove = false;
 
-                sprObj[clientId].sprX = spr[clientId].position.x;
-                sprObj[clientId].sprY = spr[clientId].position.y; 
-
-                if (spriteMove === true) {
-                    socket.emit('existingSprites', sprObj);
-                    console.log (sprObj);
-                    spriteMove = false;
-                }
             }
         }
     }
 
-    
+    for (let client in spriteDupes) {
+        if (spriteDupes[client].id == clickID) {
+            if (spriteMove === true) {
+                spr[client].attractionPoint(0.5, x, y);
+            }
+
+            let distance = dist(spr[client].position.x, spr[client].position.y, x, y);
+            if (distance < 5) { // Stop the sprite when it's close to the mouse
+                spr[client].setSpeed(0);
+                spriteMove = false;
+            }
+        }
+    }
   
   drawSprites();
 //   printMessage();
 }
-
-
 
 
 //#Source: https://stackoverflow.com/questions/7030229/storing-coordinates-in-array-in-javascript
@@ -232,9 +237,9 @@ function mouseClicked() {
         id: socket.id,
         x: mouseX,
         y: mouseY
-        }
-
-        socket.emit('mouse', mousePos); 
+    }
+    clicked = true;
+    socket.emit('mouse', mousePos); 
 }
 
 function printMessage() {

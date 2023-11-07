@@ -13,8 +13,10 @@ server.listen(port, () => {
 
 let io = require('socket.io');
 io = new io.Server(server);
-let connects = []
+let connects = [];
 let newClient;
+
+let allSpritesObj = {};
 
 io.on('connection', (socket) => {
     console.log('Client connected: ' + socket.id);
@@ -26,15 +28,25 @@ io.on('connection', (socket) => {
         connects.push(socket.id);
     }
 
-    socket.on('existingSprites', (data) => {
-        io.emit('existingSprites', data);
-
-    })
-
     //Sprite position data from client
     socket.on('mouse',(data) => {
+        console.log(data.id);
+        for(let client in allSpritesObj){
+            if (data.id == client){
+                allSpritesObj[client].sprX = data.x;
+                allSpritesObj[client].sprY = data.y;
+                console.log(allSpritesObj);
+            }
+        }
         io.emit('mouse', data); //Emit position to all clients
     })
+
+   socket.on('allSprites', (data) => {
+        allSpritesObj = Object.assign(allSpritesObj, data);
+        console.log(allSpritesObj);
+        io.emit('allSprites', allSpritesObj);
+   })
+
 
     //Message data from client
     socket.on('msg', (data) => {
@@ -45,11 +57,13 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('Client disconnected: ' + socket.id);
-        
-
-
+        for(let client in allSpritesObj) {
+            if (socket.id == allSpritesObj[client].id) {
+                delete allSpritesObj[client];
+            }
+        }
+        // console.log(allSpritesObj);
         //Remove disconnected client from list #Source: https://sentry.io/answers/remove-specific-item-from-array/
-        let dcClient = socket.id
-        io.emit('clientSplice', dcClient);
+        io.emit('clientSplice', allSpritesObj)
     })
 })
