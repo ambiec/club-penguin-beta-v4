@@ -22,9 +22,11 @@ let clicked = false;
 
 let clickID;
 let msgData;
+let msgId;
 
 let spriteDupes = {};
 let newKey;
+let delSpr;
 
 let socket = io();
 
@@ -57,10 +59,13 @@ let socket = io();
             g: g,
             b: b
         }
-        
+
         if (socket.id == newClient) {
             socket.emit('allSprites', sprObj);
         }
+        // for (let client in spr) {
+        //     console.log(spr[client].index);
+        // }
         
     })
 
@@ -81,25 +86,15 @@ let socket = io();
                     id: newKey,
                     sprX: spr[newKey].position.x,
                     sprY: spr[newKey].position.y,
-                    r: r,
-                    g: g,
-                    b: b
+                    r: data[client].r,
+                    g: data[client].g,
+                    b: data[client].b
                 }
+
+                
             }
         }
     })
-
-    /*socket.on('clientSplice',(dcClient) => {
-        // console.log(sprites.clientId);
-        // console.log(dcClient);
-        for (let i = 0; i < sprites.length; i++) {
-            if (sprites[i].clientId === dcClient) {
-                sprites[i].sprite.remove();
-                sprites.splice(i, 1);
-                // console.log(sprites);
-            }
-        }
-    })*/
 
     // Receiving 'mouse' event from SERVER
     socket.on('mouse', (data) => {
@@ -131,15 +126,44 @@ let socket = io();
         //Receive message from server
         //need to get text to pop up above sprite
         msgData = data.msg;
+        msgId = data.id;
+
         //I tried JSON.stringify, data.data, data.value lol
-
-
 
         /* Original code from socket example - append to HTML
             let msgEl = document.createElement('p');
             msgEl.innerHTML = data.msg;
             chatFeed.appendChild(msgEl);*/
 
+    })
+
+    socket.on('delSprite',(data) => { //data = disconnected socket
+        //if data is in spritedupes, delete spritedupe with the id = data
+        //can i access spritedupes here?
+        // if (socket.id != data) {
+        //     console.log(socket.id);
+        // }
+        
+        for (let i = 0; i < spr.length; i++) {
+            console.log(spr[i]);
+        }
+        
+        //delete object but actual drawn sprites are in spr array   
+        // for (let client in sprObj) {
+        //     if(sprObj[client].id == data){
+        //         delete sprObj[client];
+        //         // console.log(sprObj[client]);
+        //     }
+        // }
+
+        // for (let client in spriteDupes) {
+        //     if(spriteDupes[client].id == data){
+        //         delete spriteDupes[client];
+        //         // console.log(spriteDupes[client]);
+        //     }
+        // }
+        
+        
     })
 
 
@@ -158,7 +182,10 @@ let socket = io();
     //
     function sendMessage() {
         let curMsg = msgInput.value;
-        let msgObj = {"msg": curMsg};
+        let msgObj = {
+            "msg": curMsg,
+            "id": socket.id
+        };
 
         //Socket: send msgObj to server
         socket.emit('msg', msgObj);
@@ -221,7 +248,7 @@ function draw() {
     }
   
   drawSprites();
-//   printMessage();
+  printMessage();
 }
 
 
@@ -245,7 +272,20 @@ function mouseClicked() {
 function printMessage() {
     textSize(16);
     textAlign(CENTER);
-    text(msgData, spr.position.x, spr.position.y - 40);
+
+    for(let client in sprObj) {
+        if (sprObj[client].id == msgId) {
+            text(msgData, spr[client].position.x, spr[client].position.y - 40);
+        }
+    }
+
+    for(let client in spriteDupes) {
+        if (spriteDupes[client].id == msgId) {
+            text(msgData, spr[client].position.x, spr[client].position.y - 40);
+        }
+    }
+
+    // 
     // console.log('text stored');
 }
 

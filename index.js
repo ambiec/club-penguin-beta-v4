@@ -30,12 +30,10 @@ io.on('connection', (socket) => {
 
     //Sprite position data from client
     socket.on('mouse',(data) => {
-        console.log(data.id);
         for(let client in allSpritesObj){
             if (data.id == client){
                 allSpritesObj[client].sprX = data.x;
                 allSpritesObj[client].sprY = data.y;
-                console.log(allSpritesObj);
             }
         }
         io.emit('mouse', data); //Emit position to all clients
@@ -50,20 +48,21 @@ io.on('connection', (socket) => {
 
     //Message data from client
     socket.on('msg', (data) => {
-        console.log("Received a 'msg' event");
+        console.log(data.id);
         io.emit('msg', data); //Emit message to all clients
     })
 
 
     socket.on('disconnect', () => {
+        let delSprite;
         console.log('Client disconnected: ' + socket.id);
         for(let client in allSpritesObj) {
             if (socket.id == allSpritesObj[client].id) {
+                delSprite = allSpritesObj[client].id;
                 delete allSpritesObj[client];
             }
         }
-        // console.log(allSpritesObj);
         //Remove disconnected client from list #Source: https://sentry.io/answers/remove-specific-item-from-array/
-        io.emit('clientSplice', allSpritesObj)
+        io.emit('delSprite', delSprite);
     })
 })
