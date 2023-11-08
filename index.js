@@ -28,7 +28,8 @@ io.on('connection', (socket) => {
         connects.push(socket.id);
     }
 
-    //Sprite position data from client
+    // [B] 'mouse' event
+    // Update allSpritesObj so dupes are most updated position, then emit back to ALL CLIENTS
     socket.on('mouse',(data) => {
         for(let client in allSpritesObj){
             if (data.id == client){
@@ -36,20 +37,21 @@ io.on('connection', (socket) => {
                 allSpritesObj[client].sprY = data.y;
             }
         }
-        io.emit('mouse', data); //Emit position to all clients
+        io.emit('mouse', data); //Emit position to ALL CLIENTS
     })
 
+    // [A] 'allSprites' event
+    // Receiving & storing all sprObjs in allSpritesObj, then emit back to ALL CLIENTS
    socket.on('allSprites', (data) => {
         allSpritesObj = Object.assign(allSpritesObj, data);
         console.log(allSpritesObj);
-        io.emit('allSprites', allSpritesObj);
+        io.emit('allSprites', allSpritesObj); 
    })
 
-
-    //Message data from client
+    // [C] 'msg' event  
+    // Receive & emit data to/from CLIENT
     socket.on('msg', (data) => {
-        console.log(data.id);
-        io.emit('msg', data); //Emit message to all clients
+        io.emit('msg', data); //Emit message to ALL CLIENTS
     })
 
 
