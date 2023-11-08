@@ -151,7 +151,6 @@ socket.on('delSprite', (data) => { //data = disconnected socket
         if (data == sprites[i].id) {
             sprites[i].remove();
             sprites.splice([i], 1);
-            console.log(sprites);
         }
     }
 
@@ -159,7 +158,6 @@ socket.on('delSprite', (data) => { //data = disconnected socket
         if (data == dupes[i].id) {
             dupes[i].remove();
             dupes.splice([i], 1);
-            console.log(dupes);
         }
     }
 })
@@ -266,15 +264,16 @@ function printMessage() {
     textAlign(CENTER);
 
     // Match client that sent the message to existing sprite in sprObj & spriteDupes
-    for (let client in sprObj) {
-        if (sprObj[client].id == msgId) {
-            text(msgData, spr[client].position.x, spr[client].position.y - 40); // Draw text above matching client
+    for (let i = 0; i < sprites.length; i++) {
+        if (sprites[i].id == msgId) {
+            text(msgData, sprites[i].position.x, sprites[i].position.y - 40); // Draw text above matching client
         }
     }
 
-    for (let client in spriteDupes) {
-        if (spriteDupes[client].id == msgId) {
-            text(msgData, spr[client].position.x, spr[client].position.y - 40);
+    // Update attractionpoint for others' sprites + move
+    for (let i = 0; i < dupes.length; i++) {
+        if (dupes[i].id == msgId) {
+            text(msgData, dupes[i].position.x, dupes[i].position.y - 40);
         }
     }
 }
