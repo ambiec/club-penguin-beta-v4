@@ -42,6 +42,7 @@ io.on('connection', (socket) => {
 
     // [A] 'allSprites' event
     // Receiving & storing all sprObjs in allSpritesObj, then emit back to ALL CLIENTS
+    // #Source: https://javascript.plainenglish.io/how-to-append-a-property-to-a-javascript-object-cd57e2ace1c7
    socket.on('allSprites', (data) => {
         allSpritesObj = Object.assign(allSpritesObj, data);
         console.log(allSpritesObj);

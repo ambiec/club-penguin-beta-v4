@@ -3,7 +3,8 @@ let chatFeed = document.getElementById('chat-feed');
 let sendButton = document.getElementById('send-button');
 let chatContainer = document.getElementById('chat-container');
 
-let spr = [];
+let sprites = [];
+let dupes = [];
 let sprObj = {};
 let key;
 let r, g, b;
@@ -41,23 +42,26 @@ let socket = io();
         /////////////////
 
         // Create sprite unique to newClient socket.id upon connection
-        spr[newClient] = createSprite(
+        spr = createSprite(
             width/2, height/2, 40, 40);
-        spr[newClient].shapeColor = color(r,g,b); //DEBUG: clients may not see same color since sprObj since it's not yet stored emitted to all clients
-        spr[newClient].rotateToDirection = true;
-        spr[newClient].maxSpeed = 4;
-        spr[newClient].friction = 0.1;
+        spr.shapeColor = color(r,g,b); //DEBUG: clients may not see same color since sprObj since it's not yet stored emitted to all clients
+        spr.rotateToDirection = true;
+        spr.maxSpeed = 4;
+        spr.friction = 0.1;
+        spr.id = newClient;
 
         // Stored as sprite data object sprObj - different from spr array
         key = newClient;
         sprObj[key] = {
             id: newClient,
-            sprX: spr[newClient].position.x,
-            sprY: spr[newClient].position.y,
+            sprX: spr.position.x,
+            sprY: spr.position.y,
             r: r,
             g: g,
             b: b
         }
+
+        sprites.push(spr);
 
         // [A] 'allSprites' event
         // Only emitted by newest client (avoid repeat data on server)
@@ -79,22 +83,29 @@ let socket = io();
                 newKey = clientId; 
 
                 //Create duplicate of other existing clients' sprites for newest client
-                spr[newKey] = createSprite(
+                
+                spr = createSprite(
                     data[client].sprX, data[client].sprY, 40, 40);
-                spr[newKey].shapeColor = color(data[client].r, data[client].g, data[client].b);
-                spr[newKey].rotateToDirection = true;
-                spr[newKey].maxSpeed = 4;
-                spr[newKey].friction = 0.1;
+                spr.shapeColor = color(data[client].r, data[client].g, data[client].b);
+                spr.rotateToDirection = true;
+                spr.maxSpeed = 4;
+                spr.friction = 0.1;
+                spr.id = newKey;
+
+                dupes.push(spr);
 
                  // Stored as sprite data object spriteDupes
                 spriteDupes[newKey] = {
                     id: newKey,
-                    sprX: spr[newKey].position.x,
-                    sprY: spr[newKey].position.y,
+                    sprX: spr.position.x,
+                    sprY: spr.position.y,
                     r: data[client].r,
                     g: data[client].g,
                     b: data[client].b
                 }
+
+                console.log(sprites);
+                console.log(dupes);
             }
         }
     })
@@ -132,29 +143,21 @@ let socket = io();
     })
 
     socket.on('delSprite',(data) => { //data = disconnected socket
-        
-        for (let i = 0; i < spr.length; i++) {
-            console.log(spr[i]);
+        for(let i = 0; i < sprites.length; i++) {
+            if (data == sprites[i].id) {
+                sprites[i].remove();
+                sprites.splice([i], 1);
+                console.log(sprites);
+            }
         }
-        
-        // WIP //
 
-        //delete object but actual drawn sprites are in spr array   
-        // for (let client in sprObj) {
-        //     if(sprObj[client].id == data){
-        //         delete sprObj[client];
-        //         // console.log(sprObj[client]);
-        //     }
-        // }
-
-        // for (let client in spriteDupes) {
-        //     if(spriteDupes[client].id == data){
-        //         delete spriteDupes[client];
-        //         // console.log(spriteDupes[client]);
-        //     }
-        // }
-        
-        
+        for(let i = 0; i < dupes.length; i++) {
+            if (data == dupes[i].id) {
+                dupes[i].remove();
+                dupes.splice([i], 1);
+                console.log(dupes);
+            }
+        }
     })
 
     //////////////
@@ -197,10 +200,6 @@ let inputRect = chatContainer.getBoundingClientRect();
 function setup() {
     createCanvas(windowWidth, windowHeight);
     background(255);
-
-    //p5.play sprite
-    //Step 1. Draw sprite
-    //Step 2. If mousePressed, set sprite x,y
 }
 
 function draw() {
@@ -211,14 +210,16 @@ function draw() {
     for (let client in sprObj) { // Learned for in loops through ChatGPT
         if (sprObj[client].id == clickID) {
             if (spriteMove === true) {
-                spr[client].attractionPoint(0.5, x, y);
+                for (let i = 0; i < sprites.length; i++) {
+                    if (sprites[i].id == clickID) {
+                        spr.attractionPoint(0.5, x, y);
+                    }
+                }
             }
-
-            let distance = dist(spr[client].position.x, spr[client].position.y, x, y);
+            let distance = dist(spr.position.x, spr.position.y, x, y);
             if (distance < 5) { // Stop sprite when it's close to the mouse
-                spr[client].setSpeed(0);
+                spr.setSpeed(0);
                 spriteMove = false;
-
             }
         }
     }
@@ -227,12 +228,12 @@ function draw() {
     for (let client in spriteDupes) {
         if (spriteDupes[client].id == clickID) {
             if (spriteMove === true) {
-                spr[client].attractionPoint(0.5, x, y);
+                spr.attractionPoint(0.5, x, y);
             }
 
-            let distance = dist(spr[client].position.x, spr[client].position.y, x, y);
+            let distance = dist(spr.position.x, spr.position.y, x, y);
             if (distance < 5) { // Stop sprite when it's close to the mouse
-                spr[client].setSpeed(0);
+                spr.setSpeed(0);
                 spriteMove = false;
             }
         }
