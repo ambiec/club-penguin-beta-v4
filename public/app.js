@@ -11,6 +11,7 @@ let key;
 let newKey;
 let delSpr;
 let r, g, b;
+let spawnX, spawnY;
 
 let coords = [];
 let x, y;
@@ -40,18 +41,22 @@ socket.on('newConnect', (newClient) => {
     g = random(255);
     b = random(255);
 
+
     /////////////////
     // YOUR SPRITE //
     /////////////////
 
     // Create sprite unique to newClient socket.id upon connection
-    let spr = createSprite(
-        width / 2, height / 2, 40, 40);
-    spr.shapeColor = color(r, g, b); //DEBUG: clients may not see same color since sprObj since it's not yet stored emitted to all clients
-    spr.rotateToDirection = true;
-    spr.maxSpeed = 4;
-    spr.friction = 0.1;
-    spr.id = newClient;
+    let spr = new Sprite(windowWidth/2, windowHeight/2, 40);
+        spr.stroke = 'black';
+        spr.strokeWeight = 4;
+        spr.shapeColor = color(r, g, b); //DEBUG: clients may not see same color since sprObj since it's not yet stored emitted to all clients
+        spr.rotateToDirection = true;
+        spr.maxSpeed = 4;
+        spr.friction = 0.1;
+        spr.id = newClient;
+
+        console.log(spr);
 
     // Stored as sprite data object sprObj - different from spr array
     key = newClient;
@@ -88,7 +93,7 @@ socket.on('allSprites', (data) => {
             //Create duplicate of other existing clients' sprites for newest client
 
             let spr = createSprite(
-                data[client].sprX, data[client].sprY, 40, 40);
+                data[client].sprX, data[client].sprY, 40);
             spr.shapeColor = color(data[client].r, data[client].g, data[client].b);
             spr.rotateToDirection = true;
             spr.maxSpeed = 4;
@@ -129,7 +134,14 @@ socket.on('mouse', (data) => {
     }
 
     // Keep sprite out of chat box area
-    if (y > inputRect.bottom + 30) {
+    // if (y > inputRect.bottom + 30) {
+    //     spriteMove = true;
+    // } else {
+    //     spriteMove = false;
+    // }
+
+    //Keep sprite in plaza
+    if (y > 370) {
         spriteMove = true;
     } else {
         spriteMove = false;
@@ -197,15 +209,35 @@ let inputRect = chatContainer.getBoundingClientRect();
 /////////////////
 // P5 | P5Play //
 /////////////////
+let img;
 
 //#Source - sprites: https://creative-coding.decontextualize.com/making-games-with-p5-play/
+function preload() {
+    img = loadImage('assets/cptown.webp');
+}
+
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    background(255);
+    imageMode(CENTER);
+
 }
 
 function draw() {
-    background(255);
+    // background(255);
+
+    var ratio = 1920 / 1080;
+    if (windowWidth / windowHeight > ratio) {
+        var l = windowWidth;
+        var h = l /ratio;
+        //console.log("a");
+
+    } else {
+    var h = windowHeight;
+        var l = h*ratio;
+  }
+
+    image(img, width / 2, height / 2, l, h);
+    
 
     // [B] 'mouse' event (continued outside of sockets)
     // Update attractionpoint for your sprite + move
@@ -238,6 +270,10 @@ function draw() {
     printMessage();
 }
 
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+  }
+
 // [B] 'mouse' event
 // Click = sprite's target destination
 // Store mouse data on click and send to SERVER
@@ -247,6 +283,7 @@ function mouseClicked() {
         x: mouseX,
         y: mouseY
     }
+    console.log(mouseY);
     socket.emit('mouse', mousePos);
 }
 
@@ -266,14 +303,28 @@ function printMessage() {
     // Match client that sent the message to existing sprite in sprObj & spriteDupes
     for (let i = 0; i < sprites.length; i++) {
         if (sprites[i].id == msgId) {
-            text(msgData, sprites[i].position.x, sprites[i].position.y - 40); // Draw text above matching client
+            let msgWidth = textWidth(msgData);
+            fill(255);
+            rectMode(CENTER);
+            noStroke();
+            rect(sprites[i].position.x, sprites[i].position.y - 50, msgWidth + 12, 24, 4);
+            fill(0);
+            textAlign(CENTER, CENTER);
+            text(msgData, sprites[i].position.x, sprites[i].position.y - 50); // Draw text above matching client
         }
     }
 
     // Update attractionpoint for others' sprites + move
     for (let i = 0; i < dupes.length; i++) {
         if (dupes[i].id == msgId) {
-            text(msgData, dupes[i].position.x, dupes[i].position.y - 40);
+            let msgWidth = textWidth(msgData);
+            fill(255);
+            rectMode(CENTER);
+            noStroke();
+            rect(dupes[i].position.x, dupes[i].position.y - 50, msgWidth + 12, 24, 4);
+            fill(0);
+            textAlign(CENTER, CENTER);
+            text(msgData, dupes[i].position.x, dupes[i].position.y - 50);
         }
     }
 }

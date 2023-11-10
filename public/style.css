@@ -1,6 +1,9 @@
 body {
-    background-color: white;
+    background-color: #06a1e6;
+    /* background-image: url(assets/cptown.webp);
+    background-size: cover; */
     font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
 }
 
 .container {
